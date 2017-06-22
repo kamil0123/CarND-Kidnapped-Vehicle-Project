@@ -137,6 +137,47 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   and the following is a good resource for the actual equation to implement (look at equation 
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
+	
+		for (int i = 0; i < num_particles; i++) {
+		
+		// landmarks which are predicted to be in sensor range of particle
+		vector<LandmarkObs> predicted;
+		// observations (measurements) of car in map coordinate system (after transformation from car coordinate system)
+		vector<LandmarkObs> transformed_observations;
+		
+		Particle particle = particles[i];
+		
+		for (int j = 0; j < map_landmarks.landmark_list.size(); j++) {
+			
+			// get single landmark data 
+			int   landmark_id = map_landmarks.landmark_list[j].id_i;
+			float landmark_x = map_landmarks.landmark_list[j].x_f;
+			float landmark_y = map_landmarks.landmark_list[j].y_f;
+			
+			double distance_x = landmark_x - particle.x;
+			double distance_y = landmark_y - particle.y;
+			double distance = sqr(distance_x * distance_x + distance_y * distance_y);
+			
+			if (fabs(distance) <= sensor_range) {
+				predicted.push_back(LandmarkObs{landmark_id, landmark_x, landmark_y});
+			}
+		}
+		
+		// http://planning.cs.uiuc.edu/node99.html
+		// equation 3.33
+		for (int j = 0; j < observations.size(); j++) {
+			delta_pos = observations[j];
+			double transformed_obs_x = delta_pos.x * cos(particle.theta) - delta_pos.y * sin(particle.theta) + particle.x;
+			double transformed_obs_y = delta_pos.x * sin(particle.theta) + delta_pos.y * cos(particle.theta) + particle.y;
+			
+			transformed_observations.push_back(LandmarkObs{observations[j].id, transformed_obs_x, transformed_obs_y});
+		}
+
+		// data association:
+		// each landmark m need to be associated with nearest landmark observation in map coordinate system
+		dataAssociation(predicted, transformed_observations);
+		particle.weight = 1.0;
+	}
 }
 
 void ParticleFilter::resample() {

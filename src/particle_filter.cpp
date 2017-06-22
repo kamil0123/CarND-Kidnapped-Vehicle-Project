@@ -33,22 +33,22 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	normal_distribution<double> noise_y(0, std[1]);
 	normal_distribution<double> noise_theta(0, std[2]);
 
-	// particles
+	// init particles
 	for (int i = 0; i < num_particles; i++) {
-		Particle p;
+		Particle particle;
 
-		p.id = i;
-		p.x = x;
-		p.y = y;
-		p.theta = theta;
-		p.weight = 1.0;
+		particle.id = i;
+		particle.x = x;
+		particle.y = y;
+		particle.theta = theta;
+		particle.weight = 1.0;
 
 		// add noise
-		p.x += noise_x(gen);
-		p.y += noise_y(gen);
-		p.theta += noise_theta(gen);
+		particle.x += noise_x(gen);
+		particle.y += noise_y(gen);
+		particle.theta += noise_theta(gen);
 
-		particles.push_back(p);
+		particles.push_back(particle);
 	}
 
 	is_initialized = true;
@@ -60,6 +60,31 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	// NOTE: When adding noise you may find std::normal_distribution and std::default_random_engine useful.
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
+
+	// noise 
+	normal_distribution<double> noise_x(0, std[0]);
+	normal_distribution<double> noise_y(0, std[1]);
+	normal_distribution<double> noise_theta(0, std[2]);
+
+	// add measurements to each particle particles
+	for (int i = 0; i < num_particles; i++) {
+		
+		Particle particle = particles[i];
+
+		if (fabs(yaw_rate) < 0.0001) {
+			particle.x += velocity * delta_t * cos(particle.theta);
+			particle.y += velocity * delta_t * sin(particle.theta);
+		} else {
+			particle.x += velocity / yaw_rate * (sin(particle.theta + yaw_rate * delta_t) - sin(particle.theta));
+			particle.y += velocity / yaw_rate * (cos(particle.theta) - cos(particle.theta + yaw_rate * delta_t));
+			particle.theta += yaw_rate * delta_t;
+		}
+
+		// add noise
+		particle.x += noise_x(gen);
+		particle.y += noise_y(gen);
+		particle.theta += noise_theta(gen);
+	}
 
 }
 

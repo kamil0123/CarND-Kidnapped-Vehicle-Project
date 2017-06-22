@@ -94,8 +94,8 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
 
-	// predicted - prediced position of landmark
-	// observations - position of landmark
+	// predicted - landmarks which are predicted to be in sensor range of particle
+	// observations - observations (measurements) of car in map coordinate system
 
 	if (observations.size()>0) {
 

@@ -142,7 +142,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		
 		// landmarks which are predicted to be in sensor range of particle
 		vector<LandmarkObs> predicted;
-		// observations (measurements) of car in map coordinate system (after transformation from car coordinate system)
+		// observations (measurements) of particles in map coordinate system (after transformation from car coordinate system)
 		vector<LandmarkObs> transformed_observations;
 		
 		Particle particle = particles[i];
@@ -176,7 +176,41 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		// data association:
 		// each landmark m need to be associated with nearest landmark observation in map coordinate system
 		dataAssociation(predicted, transformed_observations);
+		// restart weight
 		particle.weight = 1.0;
+
+		for (int j = 0; j < transformed_observations).size(); j++) {
+			// get observed postion of particle
+			LandmarkObs transformed_observation = transformed_observations[i];
+			int transformed_obs_id = transformed_observation.id;
+			double transformed_obs_x = transformed_observation.x;
+			double transformed_obs_y = transformed_observation.y;
+
+			// position of associated landmark
+			double predicted_x;
+			double predicted_y;
+
+			for (int k = 0; k < predicted.size(); k++) {
+				if (predicted[k].id == transformed_obs_id) {
+					predicted_x = predicted[k].x;
+					predicted_y = predicted[k].y;
+				}
+			}
+
+			// calculate weight for current particle
+			double particle_weight;
+			double std_x = std_landmark[0];
+			double std_y = std_landmark[1];
+		
+			double factor = 1.0 / (2.0 * M_PI * std_x * std_y);
+			double weight_x_part = pow(transformed_obs_x - predicted_x,2)  / (2 * pow(std_x, 2));
+			double weight_y_part = pow(transformed_obs_y - predicted_y,2)  / (2 * pow(std_y, 2));
+
+			particle_weight = factor * exp(-(weight_x_part + weight_y_part));
+
+			// total observations weight
+			particles[i].weight *= particle_weight;
+		}
 	}
 }
 

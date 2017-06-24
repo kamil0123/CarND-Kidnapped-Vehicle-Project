@@ -19,6 +19,10 @@
 
 using namespace std;
 
+// http://www.cplusplus.com/reference/random/default_random_engine/
+// random number engine class that generates pseudo-random numbers
+static default_random_engine gen;
+
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
 	//   x, y, theta and their uncertainties from GPS) and all weights to 1. 
@@ -62,9 +66,9 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 
 	// noise 
-	normal_distribution<double> noise_x(0, std[0]);
-	normal_distribution<double> noise_y(0, std[1]);
-	normal_distribution<double> noise_theta(0, std[2]);
+	normal_distribution<double> noise_x(0, std_pos[0]);
+	normal_distribution<double> noise_y(0, std_pos[1]);
+	normal_distribution<double> noise_theta(0, std_pos[2]);
 
 	// add measurements to each particle particles
 	for (int i = 0; i < num_particles; i++) {
@@ -107,13 +111,13 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 			int best_prediction_id = predicted[0].id;
 			double distance_x = observation.x - predicted[0].x;
 			double distance_y = observation.y - predicted[0].y;
-			double min_distance = sqr(distance_x * distance_x + distance_y * distance_y);
+			double min_distance = sqrt(distance_x * distance_x + distance_y * distance_y);
 			double new_distance = 0.0;
 
 			for (int j = 1; j < predicted.size(); j++) {
 				distance_x = observation.x - predicted[j].x;
 				distance_y = observation.y - predicted[j].y;
-				new_distance = sqr(distance_x * distance_x + distance_y * distance_y);
+				new_distance = sqrt(distance_x * distance_x + distance_y * distance_y);
 
 				if (new_distance < min_distance) {
 					min_distance = new_distance;
@@ -156,7 +160,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			
 			double distance_x = landmark_x - particle.x;
 			double distance_y = landmark_y - particle.y;
-			double distance = sqr(distance_x * distance_x + distance_y * distance_y);
+			double distance = sqrt(distance_x * distance_x + distance_y * distance_y);
 			
 			if (fabs(distance) <= sensor_range) {
 				predicted.push_back(LandmarkObs{landmark_id, landmark_x, landmark_y});
@@ -166,7 +170,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		// http://planning.cs.uiuc.edu/node99.html
 		// equation 3.33
 		for (int j = 0; j < observations.size(); j++) {
-			delta_pos = observations[j];
+			LandmarkObs delta_pos = observations[j];
 			double transformed_obs_x = delta_pos.x * cos(particle.theta) - delta_pos.y * sin(particle.theta) + particle.x;
 			double transformed_obs_y = delta_pos.x * sin(particle.theta) + delta_pos.y * cos(particle.theta) + particle.y;
 			
@@ -179,7 +183,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		// restart weight
 		particle.weight = 1.0;
 
-		for (int j = 0; j < transformed_observations).size(); j++) {
+		for (int j = 0; j < transformed_observations.size(); j++) {
 			// get observed postion of particle
 			LandmarkObs transformed_observation = transformed_observations[i];
 			int transformed_obs_id = transformed_observation.id;

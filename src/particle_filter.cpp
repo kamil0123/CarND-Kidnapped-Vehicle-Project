@@ -141,7 +141,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 	
-		for (int i = 0; i < num_particles; i++) {
+	for (int i = 0; i < num_particles; i++) {
 		
 		// landmarks which are predicted to be in sensor range of particle
 		vector<LandmarkObs> predicted;
@@ -180,14 +180,22 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		// each landmark m need to be associated with nearest landmark observation in map coordinate system
 		dataAssociation(predicted, transformed_observations);
 		// restart weight
-		particle.weight = 1.0;
+		particles[i].weight = 1.0 / num_particles;
+
+		vector<int> associations;
+    	vector<double> sense_x;
+    	vector<double> sense_y;
 
 		for (int j = 0; j < transformed_observations.size(); j++) {
 			// get observed postion of particle
-			LandmarkObs transformed_observation = transformed_observations[i];
+			LandmarkObs transformed_observation = transformed_observations[j];
 			int transformed_obs_id = transformed_observation.id;
 			double transformed_obs_x = transformed_observation.x;
 			double transformed_obs_y = transformed_observation.y;
+
+			associations.push_back(transformed_obs_id);
+      		sense_x.push_back(transformed_obs_x);
+      		sense_y.push_back(transformed_obs_y);
 
 			// position of associated landmark
 			double predicted_x;
@@ -213,7 +221,11 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 			// total observations weight
 			particles[i].weight *= particle_weight;
+
 		}
+
+		particles[i] = SetAssociations(particles[i], associations, sense_x, sense_y);
+		weights[i] = particles[i].weight; // no need for normalization	
 	}
 }
 

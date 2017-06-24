@@ -73,21 +73,19 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	// add measurements to each particle particles
 	for (int i = 0; i < num_particles; i++) {
 		
-		Particle particle = particles[i];
-
 		if (fabs(yaw_rate) < 0.0001) {
-			particle.x += velocity * delta_t * cos(particle.theta);
-			particle.y += velocity * delta_t * sin(particle.theta);
+			particles[i].x += velocity * delta_t * cos(particles[i].theta);
+			particles[i].y += velocity * delta_t * sin(particles[i].theta);
 		} else {
-			particle.x += velocity / yaw_rate * (sin(particle.theta + yaw_rate * delta_t) - sin(particle.theta));
-			particle.y += velocity / yaw_rate * (cos(particle.theta) - cos(particle.theta + yaw_rate * delta_t));
-			particle.theta += yaw_rate * delta_t;
+			particles[i].x += velocity / yaw_rate * (sin(particles[i].theta + yaw_rate * delta_t) - sin(particles[i].theta));
+			particles[i].y += velocity / yaw_rate * (cos(particles[i].theta) - cos(particles[i].theta + yaw_rate * delta_t));
+			particles[i].theta += yaw_rate * delta_t;
 		}
 
 		// add noise
-		particle.x += noise_x(gen);
-		particle.y += noise_y(gen);
-		particle.theta += noise_theta(gen);
+		particles[i].x += noise_x(gen);
+		particles[i].y += noise_y(gen);
+		particles[i].theta += noise_theta(gen);
 	}
 
 }

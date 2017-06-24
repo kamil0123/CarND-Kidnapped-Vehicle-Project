@@ -37,6 +37,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	normal_distribution<double> noise_y(0, std[1]);
 	normal_distribution<double> noise_theta(0, std[2]);
 
+	double weight = 1.0/num_particles;
+
 	// init particles
 	for (int i = 0; i < num_particles; i++) {
 		Particle particle;
@@ -45,7 +47,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particle.x = x;
 		particle.y = y;
 		particle.theta = theta;
-		particle.weight = 1.0;
+		particle.weight = weight;
 
 		// add noise
 		particle.x += noise_x(gen);
@@ -53,6 +55,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particle.theta += noise_theta(gen);
 
 		particles.push_back(particle);
+		weights.push_back(weight);
 	}
 
 	is_initialized = true;
@@ -102,19 +105,17 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	if (observations.size()>0) {
 
 		for (int i = 0; i <observations.size(); i++) {
-
-			// current observation
-			LandmarkObs observation = observations[i];
+			// observations[i] - current observation
 
 			int best_prediction_id = predicted[0].id;
-			double distance_x = observation.x - predicted[0].x;
-			double distance_y = observation.y - predicted[0].y;
+			double distance_x = observations[i].x - predicted[0].x;
+			double distance_y = observations[i].y - predicted[0].y;
 			double min_distance = sqrt(distance_x * distance_x + distance_y * distance_y);
 			double new_distance = 0.0;
 
 			for (int j = 1; j < predicted.size(); j++) {
-				distance_x = observation.x - predicted[j].x;
-				distance_y = observation.y - predicted[j].y;
+				distance_x = observations[i].x - predicted[j].x;
+				distance_y = observations[i].y - predicted[j].y;
 				new_distance = sqrt(distance_x * distance_x + distance_y * distance_y);
 
 				if (new_distance < min_distance) {
@@ -122,7 +123,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 					best_prediction_id = predicted[j].id;
 				}
 			}
-			observation.id = best_prediction_id;
+			observations[i].id = best_prediction_id;
 		}
 	}
 }

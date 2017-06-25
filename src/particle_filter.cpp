@@ -37,7 +37,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	normal_distribution<double> noise_y(0, std[1]);
 	normal_distribution<double> noise_theta(0, std[2]);
 
-	double weight = 1.0/num_particles;
+	double weight = 1.0;
 
 	// init particles
 	for (int i = 0; i < num_particles; i++) {
@@ -106,16 +106,17 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 
 		for (int i = 0; i <observations.size(); i++) {
 			// observations[i] - current observation
+			LandmarkObs observation = observations[i];
 
 			int best_prediction_id = predicted[0].id;
-			double distance_x = observations[i].x - predicted[0].x;
-			double distance_y = observations[i].y - predicted[0].y;
+			double distance_x = observation.x - predicted[0].x;
+			double distance_y = observation.y - predicted[0].y;
 			double min_distance = sqrt(distance_x * distance_x + distance_y * distance_y);
 			double new_distance = 0.0;
 
 			for (int j = 1; j < predicted.size(); j++) {
-				distance_x = observations[i].x - predicted[j].x;
-				distance_y = observations[i].y - predicted[j].y;
+				distance_x = observation.x - predicted[j].x;
+				distance_y = observation.y - predicted[j].y;
 				new_distance = sqrt(distance_x * distance_x + distance_y * distance_y);
 
 				if (new_distance < min_distance) {
@@ -180,7 +181,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		// each landmark m need to be associated with nearest landmark observation in map coordinate system
 		dataAssociation(predicted, transformed_observations);
 		// restart weight
-		particles[i].weight = 1.0 / num_particles;
+		particles[i].weight = 1.0;
 
 		vector<int> associations;
     	vector<double> sense_x;
@@ -225,7 +226,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		}
 
 		particles[i] = SetAssociations(particles[i], associations, sense_x, sense_y);
-		weights[i] = particles[i].weight; // no need for normalization	
 	}
 }
 
@@ -239,20 +239,20 @@ void ParticleFilter::resample() {
 	// http://calebmadrigal.com/resampling-wheel-algorithm/
 
 	vector<Particle> new_particles;
+	vector<double> weights;
 	double max_weight;
 	double beta = 0.0;
 
-	uniform_real_distribution<double> randomReal(0.0, max_weight);
-	uniform_int_distribution<int> randomInt(0, num_particles-1);
-	int index = randomInt(gen);
-
 	// get current weights
-	vector<double> weights;
   	for (int i = 0; i < num_particles; i++) {
     	weights.push_back(particles[i].weight);
 	}
 	// get max weight
 	max_weight = *max_element(weights.begin(), weights.end());
+
+	uniform_real_distribution<double> randomReal(0.0, max_weight);
+	uniform_int_distribution<int> randomInt(0, num_particles-1);
+	int index = randomInt(gen);
 
 	for (int i = 0; i < num_particles; i++) {
 
